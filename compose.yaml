@@ -1,0 +1,52 @@
+# Docker Compose for url-shortener
+# - Starts Database and App
+
+# Project name
+name: url-shortener
+
+services:
+
+  # Database db
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-shortener}
+      POSTGRES_USER: ${POSTGRES_USER:-shortener}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shortener}
+    # No ports, only app needs database 
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # Check if the database accepts connection (container is healthy)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shortener} -d ${POSTGRES_DB:-shortener}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # url-shortener App
+  app:
+    build:
+      context: .
+      dockerfile: ${APP_DOCKERFILE:-Dockerfile.opti}
+
+    # Start App, when db is healthy
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # App under http://localhost:8080
+    ports:
+      - ${APP_PORT:-8080}:8080
+
+    environment:
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-shortener};Username=${POSTGRES_USER:-shortener};Password=${POSTGRES_PASSWORD:-shortener}
+
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  db-data:

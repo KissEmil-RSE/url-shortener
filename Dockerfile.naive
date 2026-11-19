@@ -1,0 +1,17 @@
+# Inefficient Dockerfile
+# - Builds a Dockerfile for the url-shortener project
+# - Is inefficient, because the entire project with build tools, dependencies, ... is added to docker
+# - COPY copies the entire project
+# - Size of Docker-Container is huge, any changes will lead to "reload" of entire container
+# - No defined USER
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+WORKDIR /app
+
+COPY . .
+RUN dotnet publish -c Release -o out
+
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "out/UrlShortener.dll"]

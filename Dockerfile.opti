@@ -1,0 +1,36 @@
+# Optimized Dockerfile
+# - More Stages: Build and image are seperated (smaller size)
+# - Copies only relevante files (no .git, README, ...)
+# - Defined User
+
+# Build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS builder
+
+WORKDIR /src
+
+# Only "relevant" files/folders are copied
+COPY UrlShortener.csproj global.json ./
+RUN dotnet restore
+
+COPY Program.cs appsettings.json ./
+COPY Models/ ./Models/
+COPY Endpoints/ ./Endpoints/
+COPY Data/ ./Data/
+COPY Contracts/ ./Contracts/
+
+RUN dotnet publish -c Release -o /app/publish --no-restore
+
+
+# Runtime with small image
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
+
+WORKDIR /app
+
+# Take things from builder
+COPY --from=builder /app/publish .
+
+USER $APP_UID
+
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "UrlShortener.dll"]
