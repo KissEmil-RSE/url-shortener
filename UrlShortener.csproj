@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+
+    <!-- Trivy liest nicht aus .csproj sondern aus packages.lock.json -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- -->
+
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
