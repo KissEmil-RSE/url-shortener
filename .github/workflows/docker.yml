@@ -1,6 +1,9 @@
 # GitHub Actions workflow
 # - Builds the Docker image (Dockerfile.opti) on every push / pull request to main
 
+# - Added a Container Check with Trivy to workflow
+# - Added SBOM and Attestation to workflow
+
 name: Build and publish Docker image
 
 on:
@@ -27,7 +30,7 @@ jobs:
       - name: Trivy backend scan (filesystem)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          scan-type: fs      
+          scan-type: fs
           scan-ref: .
           severity: HIGH,CRITICAL
           format: table
@@ -71,6 +74,7 @@ jobs:
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # Docker Image bauen
       - name: Build and push image
         id: push
         uses: docker/build-push-action@v7
@@ -81,6 +85,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      # Danach wird das Image immer "weitergereicht" ...:
+      # Trivy Scan, SBOM, Artifact, ...
       - name: Trivy container scan (image)
         if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@v0.36.0
@@ -104,8 +110,8 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7
         with:
-          name: sbom-report     
-          path: sbom.cdx.json   
+          name: sbom-report
+          path: sbom.cdx.json
 
       - name: Attest SBOM
         if: github.event_name != 'pull_request'

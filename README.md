@@ -7,6 +7,7 @@ A `GET /{code}` request redirects to the original URL and increments a click cou
 - PostgreSQL via EF Core (with a checked-in migration)
 - One entity, four link endpoints, one redirect endpoint
 - Two Dockerfiles: a naively written one and an optimized one
+- !NEW!: GitHub Actions pipeline with Trivy scans, SBOM generation and SBOM attestation
 
 ## Endpoints
 
@@ -40,3 +41,16 @@ url-shortener/
 
 Docker with Compose v2 (the `docker compose` command). To run the
 API outside Docker you need the .NET 10 SDK and a PostgreSQL 17 instance.
+
+## !NEW! CI/CD pipeline
+
+Workflow: [`.github/workflows/docker.yml`](.github/workflows/docker.yml).
+It runs on every push and pull request to `main` and can also be started manually.
+
+```text
+backend-scan  ──►  docker-build
+  Trivy fs           build (Dockerfile.opti) + push to ghcr.io
+                     Trivy image scan
+                     SBOM (CycloneDX) → workflow artifact
+                     SBOM attestation (actions/attest)
+```
